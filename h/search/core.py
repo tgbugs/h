@@ -52,6 +52,7 @@ class Search(object):
                             query.NipsaFilter(request),
                             query.AnyMatcher(),
                             query.TagsMatcher(),
+                            query.UriWildcardFilter(request),
                             query.KeyValueMatcher()]
         self._aggregations = []
 

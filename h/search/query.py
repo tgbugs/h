@@ -158,6 +158,33 @@ class GroupAuthFilter(object):
         return search.filter("terms", group=groups)
 
 
+class UriWildcardFilter(object):
+
+    """
+    A filter that selects only annotations where the 'site' parameter matches as *site*.
+    """
+
+    def __init__(self, request):
+        """Searches for wildcard uri's.
+
+        :param request: the pyramid.request object
+
+        """
+        self.request = request
+
+    def __call__(self, search, params):
+        query_uris = params.getall('wildcard_uri')
+
+        uris = set()
+        for query_uri in query_uris:
+            expanded = storage.expand_uri(self.request.db, query_uri)
+
+            us = [uri.normalize(u) for u in expanded]
+            uris.update(us)
+
+        return search.query(Q('bool', should=[Q('wildcard', **{"target.scope": u}) for u in uris]))
+
+
 class UriFilter(object):
 
     """

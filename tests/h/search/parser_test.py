@@ -48,6 +48,10 @@ from h.search import parser
     ('url:https://example.com?foo=bar&baz=qux#hello', MultiDict([('url', 'https://example.com?foo=bar&baz=qux#hello')])),
     ('URL:https://example.com', MultiDict([('url', 'https://example.com')])),
 
+    # wildcard_uri field
+    ('wildcard_uri:https://example.com/*', MultiDict([('wildcard_uri', 'https://example.com/*')])),
+    ('wildcard_uri:urn:x-pdf:h*', MultiDict([('wildcard_uri', 'urn:x-pdf:h*')])),
+
     # any field
     ('foo', MultiDict([('any', 'foo')])),
     ('foo bar', MultiDict([('any', 'foo'), ('any', 'bar')])),

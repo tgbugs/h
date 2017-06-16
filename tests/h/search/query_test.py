@@ -267,6 +267,44 @@ class TestUriFilter(object):
         return patch('h.search.query.storage')
 
 
+class TestUriWildcardFilter():
+    def test_matches_wildcards(self, search, Annotation):
+        Annotation(target_uri="http://baz.com/foo-45")
+        Annotation(target_uri="http://bar.com/foo")
+        Annotation(target_uri="https://www.foo.com")
+        expected_ids = [Annotation(target_uri="https://bar.com/foo-43").id,
+                        Annotation(target_uri="http://bar.com/foo-457").id,
+                        Annotation(target_uri="http://bar.com/baz-45").id]
+
+        params = webob.multidict.MultiDict()
+        params.add("wildcard_uri", "http://bar.com/*-*")
+        result = search.run(params)
+
+        assert sorted(result.annotation_ids) == sorted(expected_ids)
+
+    def test_matches_multiple_wildcards(self, search, Annotation):
+        Annotation(target_uri="http://baz.com/foo-45")
+        Annotation(target_uri="http://bar.com/foo")
+        Annotation(target_uri="https://www.foo.com")
+        expected_ids = [Annotation(target_uri="https://bar.com/foo-43").id,
+                        Annotation(target_uri="http://bar.com/foo-457").id,
+                        Annotation(target_uri="http://bas.com/bug-98").id,
+                        Annotation(target_uri="http://bas.com/foo-83").id,
+                        Annotation(target_uri="http://bar.com/baz-45").id]
+
+        params = webob.multidict.MultiDict()
+        params.add("wildcard_uri", "http://bar.com/*-*")
+        params.add("wildcard_uri", "http://bas.com/*-*")
+        result = search.run(params)
+
+        assert sorted(result.annotation_ids) == sorted(expected_ids)
+
+    @pytest.fixture
+    def search(self, search, pyramid_request):
+        search.append_qualifier(query.UriWildcardFilter(pyramid_request))
+        return search
+
+
 class TestDeletedFilter(object):
 
     def test_excludes_deleted_annotations(self, search, es_client, Annotation):

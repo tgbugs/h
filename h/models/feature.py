@@ -13,6 +13,7 @@ log = logging.getLogger(__name__)
 FEATURES = {
     'embed_cachebuster': ("Cache-bust client entry point URL to prevent browser/CDN from "
                           "using a cached version?"),
+    'wild_card_uri': ("Enables wild card searching of uri's."),
     'filter_highlights': ("Filter highlights in document based on visible"
                           " annotations in sidebar?"),
     'overlay_highlighter': "Use the new overlay highlighter?",
