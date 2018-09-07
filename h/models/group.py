@@ -5,7 +5,25 @@ from collections import namedtuple
 
 import enum
 import sqlalchemy as sa
-from pyramid import security
+try:
+    from pyramid import security
+except ModuleNotFoundError as e:
+    class AllPermissionsList(object):
+        """ Stand in 'permission list' to represent all permissions """
+        def __iter__(self):
+            return ()
+        def __contains__(self, other):
+            return True
+        def __eq__(self, other):
+            return isinstance(other, self.__class__)
+
+    ALL_PERMISSIONS = AllPermissionsList()
+
+    class security:
+        Allow = 'Allow'
+        Everyone = 'system.Everyone'
+        DENY_ALL = ('Deny', 'system.Everyone', AllPermissionsList())
+
 import slugify
 
 from h.db import Base

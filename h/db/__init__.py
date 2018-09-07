@@ -24,10 +24,7 @@ try:
     import zope.sqlalchemy
     import zope.sqlalchemy.datamanager
 except ImportError as ze:
-    try:
-        from flask_sqlalchemy import SQLAlchemy
-    except ImportError as fe:
-        raise fe from ze
+    print('not import zope related things')
 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import exc

@@ -3,13 +3,19 @@
 from __future__ import unicode_literals
 
 import copy
-from pyramid import i18n
+try:
+    from pyramid import i18n
+except ModuleNotFoundError as e:
+    pass
 
 from h.schemas.exc import ValidationError
 from h.schemas.json import JSONSchema
 from h.util import document_claims
 
-_ = i18n.TranslationStringFactory(__package__)
+try:
+    _ = i18n.TranslationStringFactory(__package__)  # what is this doing?
+except NameError as e:
+    pass
 
 
 class AnnotationSchema(JSONSchema):
