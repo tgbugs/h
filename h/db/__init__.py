@@ -14,11 +14,21 @@ property `request.db` which is provided by this module.
 """
 from __future__ import unicode_literals
 
+import os
+
 import logging
 
 import sqlalchemy
-import zope.sqlalchemy
-import zope.sqlalchemy.datamanager
+
+try:
+    import zope.sqlalchemy
+    import zope.sqlalchemy.datamanager
+except ImportError as ze:
+    try:
+        from flask_sqlalchemy import SQLAlchemy
+    except ImportError as fe:
+        raise fe from ze
+
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import exc
 from sqlalchemy.orm import sessionmaker
@@ -85,7 +95,10 @@ def _session(request):
     except AttributeError:
         pass
     else:
-        zope.sqlalchemy.register(session, transaction_manager=tm)
+        try:
+            zope.sqlalchemy.register(session, transaction_manager=tm)
+        except NameError as ze:
+            print('I have no idea what the flask equivalent is here ...')
 
     # Track uncommitted changes so we can verify that everything was either
     # committed or rolled back when the request finishes.
@@ -135,7 +148,9 @@ def _maybe_create_default_organization(engine, authority):
                                           authority=authority,
                                           pubid='__default__',
                                           )
-        with open('h/static/images/icons/logo.svg', 'rb') as h_logo:
+        logo = os.path.join(os.path.dirname(__file__),
+                            '../static/images/icons/logo.svg')
+        with open(logo, 'rb') as h_logo:
             default_org.logo = h_logo.read().decode("utf-8")
         session.add(default_org)
 

@@ -6,7 +6,10 @@ from datetime import datetime
 import logging
 
 import sqlalchemy as sa
-import transaction
+try:
+    from transaction.interfaces import TransientError
+except ImportError as ze:
+    print('I think this ends up being a sa failed transaction error or something')
 from sqlalchemy.dialects import postgresql as pg
 from sqlalchemy.ext.hybrid import hybrid_property
 
@@ -18,7 +21,8 @@ from h.util.uri import normalize as uri_normalize
 log = logging.getLogger(__name__)
 
 
-class ConcurrentUpdateError(transaction.interfaces.TransientError):
+#class ConcurrentUpdateError(transaction.interfaces.TransientError):
+class ConcurrentUpdateError(Exception):
     """Raised when concurrent updates to document data conflict."""
 
 
