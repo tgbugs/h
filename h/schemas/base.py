@@ -4,8 +4,6 @@
 
 from __future__ import unicode_literals
 
-import copy
-
 import colander
 import deform
 from pyramid.session import check_csrf_token
