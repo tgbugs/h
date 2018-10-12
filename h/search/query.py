@@ -8,8 +8,9 @@ from h._compat import urlparse
 
 from h import storage
 from h.util import uri
-from elasticsearch_dsl import Q
-from elasticsearch_dsl.query import SimpleQueryString
+if False:
+    from elasticsearch_dsl import Q
+    from elasticsearch_dsl.query import SimpleQueryString
 
 LIMIT_DEFAULT = 20
 # Elasticsearch requires offset + limit must be <= 10,000.

@@ -4,7 +4,6 @@ import logging
 from collections import namedtuple
 from contextlib import contextmanager
 from elasticsearch.exceptions import ConnectionTimeout
-import elasticsearch_dsl
 from webob.multidict import MultiDict
 
 from h.search import query
@@ -35,6 +34,8 @@ class Search(object):
     :type stats: statsd.client.StatsClient
     """
     def __init__(self, request, separate_replies=False, stats=None, _replies_limit=200):
+        import elasticsearch_dsl
+        self.elasticsearch_dsl = elasticsearch_dsl
         self.es = request.es
         self.separate_replies = separate_replies
         self.stats = stats
@@ -90,7 +91,7 @@ class Search(object):
         Applies the modifiers, aggregations, and executes the search.
         """
         # Don't return any fields, just the metadata so set _source=False.
-        search = elasticsearch_dsl.Search(
+        search = self.elasticsearch_dsl.Search(
             using=self.es.conn, index=self.es.index).source(False)
 
         for agg in aggregations:
