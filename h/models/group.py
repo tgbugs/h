@@ -5,8 +5,8 @@ from collections import namedtuple
 
 import enum
 import sqlalchemy as sa
-from pyramid import security
-import slugify
+#from pyramid import security
+#import slugify
 
 from h.db import Base
 from h.db import mixins

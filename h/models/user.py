@@ -7,7 +7,7 @@ import re
 import sqlalchemy as sa
 from sqlalchemy.ext.hybrid import Comparator, hybrid_property
 from sqlalchemy.ext.declarative import declared_attr
-from pyramid import security
+#from pyramid import security
 
 from h._compat import string_types
 from h.db import Base

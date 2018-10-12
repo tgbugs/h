@@ -20,14 +20,14 @@ from __future__ import unicode_literals
 
 from datetime import datetime
 
-from pyramid import i18n
+#from pyramid import i18n
 
 from h import models, schemas
 from h.db import types
 from h.util.group_scope import match as group_scope_match
 from h.models.document import update_document_metadata
 
-_ = i18n.TranslationStringFactory(__package__)
+#_ = i18n.TranslationStringFactory(__package__)
 
 
 def fetch_annotation(session, id_):
