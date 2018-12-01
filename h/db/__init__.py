@@ -17,8 +17,6 @@ from __future__ import unicode_literals
 import logging
 
 import sqlalchemy
-import zope.sqlalchemy
-import zope.sqlalchemy.datamanager
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import exc
 from sqlalchemy.orm import sessionmaker
@@ -121,8 +119,13 @@ def _session(request):
     return session
 
 
-def _maybe_create_default_organization(engine, authority):
+def _maybe_create_default_organization(engine, authority, logopath=None):
     from h import models
+    if logopath is None:
+        from os.path import dirname
+        workingdir = dirname(dirname(dirname(__file__)))
+        logopath = workingdir + '/' + 'h/static/images/icons/logo.svg'
+
     session = Session(bind=engine)
 
     try:
@@ -135,7 +138,7 @@ def _maybe_create_default_organization(engine, authority):
                                           authority=authority,
                                           pubid='__default__',
                                           )
-        with open('h/static/images/icons/logo.svg', 'rb') as h_logo:
+        with open(logopath, 'rb') as h_logo:
             default_org.logo = h_logo.read().decode("utf-8")
         session.add(default_org)
 
