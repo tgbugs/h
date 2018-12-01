@@ -7,7 +7,8 @@ import deform
 
 from h import i18n
 from h.models.auth_client import GrantType
-from h.schemas.base import CSRFSchema, enum_type
+from h.schemas.base import enum_type
+from h.schemas.csrf import CSRFSchema
 
 _ = i18n.TranslationString
 GrantTypeSchemaType = enum_type(GrantType)

@@ -6,7 +6,7 @@ import deform
 
 from h import i18n, models
 from h.schemas import validators
-from h.schemas.base import CSRFSchema
+from h.schemas.csrf import CSRFSchema
 
 _ = i18n.TranslationString
 

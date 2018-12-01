@@ -12,7 +12,7 @@ from h.models.group import (
     GROUP_NAME_MAX_LENGTH,
     GROUP_DESCRIPTION_MAX_LENGTH
 )
-from h.schemas.base import CSRFSchema
+from h.schemas.csrf import CSRFSchema
 
 _ = i18n.TranslationString
 

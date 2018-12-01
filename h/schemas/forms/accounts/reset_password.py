@@ -6,7 +6,7 @@ import deform
 from itsdangerous import BadData, SignatureExpired
 
 from h import i18n, models
-from h.schemas.base import CSRFSchema
+from h.schemas.csrf import CSRFSchema
 from h.schemas.forms.accounts import util
 
 _ = i18n.TranslationString
