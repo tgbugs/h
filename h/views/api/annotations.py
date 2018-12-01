@@ -17,6 +17,7 @@ authorization system. You can find the mapping between annotation "permissions"
 objects and Pyramid ACLs in :mod:`h.traversal`.
 """
 from __future__ import unicode_literals
+import colander
 from pyramid import i18n
 import newrelic.agent
 
@@ -30,11 +31,176 @@ from h.traversal import AnnotationContext
 from h.schemas.util import validate_query_params
 from h.schemas.annotation import (
     CreateAnnotationSchema,
-    SearchParamsSchema,
     UpdateAnnotationSchema)
 from h.views.api.config import api_config
 
 _ = i18n.TranslationStringFactory(__package__)
+
+
+class SearchParamsSchema(colander.Schema):
+    _separate_replies = colander.SchemaNode(
+        colander.Boolean(),
+        missing=False,
+        description="Return a separate set of annotations and their replies.",
+    )
+    sort = colander.SchemaNode(
+        colander.String(),
+        validator=colander.OneOf(["created", "updated", "group", "id", "user"]),
+        missing="updated",
+        description="The field by which annotations should be sorted.",
+    )
+    search_after = colander.SchemaNode(
+        colander.String(),
+        missing=colander.drop,
+        description="""Returns results after the annotation who's sort field
+                    has this value. If specifying a date use the format
+                    yyyy-MM-dd'T'HH:mm:ss.SSX or time in miliseconds since the
+                    epoch. This is used for iteration through large collections
+                    of results.""",
+    )
+    limit = colander.SchemaNode(
+        colander.Integer(),
+        validator=colander.Range(min=0, max=LIMIT_MAX),
+        missing=LIMIT_DEFAULT,
+        description="The maximum number of annotations to return.",
+    )
+    order = colander.SchemaNode(
+        colander.String(),
+        validator=colander.OneOf(["asc", "desc"]),
+        missing="desc",
+        description="The direction of sort.",
+    )
+    offset = colander.SchemaNode(
+        colander.Integer(),
+        validator=colander.Range(min=0, max=OFFSET_MAX),
+        missing=0,
+        description="""The number of initial annotations to skip. This is
+                       used for pagination. Not suitable for paging through
+                       thousands of annotations-search_after should be used
+                       instead.""",
+    )
+    group = colander.SchemaNode(
+        colander.String(),
+        missing=colander.drop,
+        description="Limit the results to this group of annotations.",
+    )
+    quote = colander.SchemaNode(
+        colander.Sequence(),
+        colander.SchemaNode(colander.String()),
+        missing=colander.drop,
+        description="""Limit the results to annotations that contain this text inside
+                        the text that was annotated.""",
+    )
+    references = colander.SchemaNode(
+        colander.Sequence(),
+        colander.SchemaNode(colander.String()),
+        missing=colander.drop,
+        description="""Returns annotations that are replies to this parent annotation id.""",
+    )
+    tag = colander.SchemaNode(
+        colander.Sequence(),
+        colander.SchemaNode(colander.String()),
+        missing=colander.drop,
+        description="Limit the results to annotations tagged with the specified value.",
+    )
+    tags = colander.SchemaNode(
+        colander.Sequence(),
+        colander.SchemaNode(colander.String()),
+        missing=colander.drop,
+        description="Alias of tag.",
+    )
+    text = colander.SchemaNode(
+        colander.Sequence(),
+        colander.SchemaNode(colander.String()),
+        missing=colander.drop,
+        description="Limit the results to annotations that contain this text in their textual body.",
+    )
+    uri = colander.SchemaNode(
+        colander.Sequence(),
+        colander.SchemaNode(colander.String()),
+        missing=colander.drop,
+        description="""Limit the results to annotations matching the specific URI
+                       or equivalent URIs. URI can be a URL (a web page address) or
+                       a URN representing another kind of resource such as DOI
+                       (Digital Object Identifier) or a PDF fingerprint.""",
+    )
+    uri_parts = colander.SchemaNode(
+        colander.Sequence(),
+        colander.SchemaNode(colander.String()),
+        name='uri.parts',
+        missing=colander.drop,
+        description="""Limit the results to annotations with the given keyword
+                       appearing in the URL.""",
+    )
+    url = colander.SchemaNode(
+        colander.Sequence(),
+        colander.SchemaNode(colander.String()),
+        missing=colander.drop,
+        description="Alias of uri.",
+    )
+    wildcard_uri = colander.SchemaNode(
+        colander.Sequence(),
+        colander.SchemaNode(colander.String()),
+        validator=_validate_wildcard_uri,
+        missing=colander.drop,
+        description="""
+            Limit the results to annotations matching the wildcard URI.
+            URI can be a URL (a web page address) or a URN representing another
+            kind of resource such as DOI (Digital Object Identifier) or a
+            PDF fingerprint.
+
+            `*` will match any character sequence (including an empty one),
+            and a `_` will match any single character. Wildcards are only permitted
+            within the path and query parts of the URI.
+
+            Escaping wildcards is not supported.
+
+            Examples of valid uris":" `http://foo.com/*` `urn:x-pdf:*` `file://localhost/_bc.pdf`
+            Examples of invalid uris":" `*foo.com` `u_n:*` `file://*` `http://foo.com*`
+            """,
+    )
+    any = colander.SchemaNode(
+        colander.Sequence(),
+        colander.SchemaNode(colander.String()),
+        missing=colander.drop,
+        description="""Limit the results to annotations whose quote, tags,
+                       text or url fields contain this keyword.""",
+    )
+    user = colander.SchemaNode(
+        colander.String(),
+        missing=colander.drop,
+        description="Limit the results to annotations made by the specified user.",
+    )
+
+    def validator(self, node, cstruct):
+        sort = cstruct['sort']
+        search_after = cstruct.get('search_after', None)
+
+        if search_after:
+            if sort in ["updated", "created"] and not self._date_is_parsable(search_after):
+                raise colander.Invalid(
+                    node,
+                    """search_after must be a parsable date in the form
+                    yyyy-MM-dd'T'HH:mm:ss.SSX
+                    or time in miliseconds since the epoch.""")
+
+            # offset must be set to 0 if search_after is specified.
+            cstruct["offset"] = 0
+
+    def _date_is_parsable(self, value):
+        """Return True if date is parsable and False otherwise."""
+
+        # Dates like "2017" can also be cast as floats so if a number is less
+        # than 9999 it is assumed to be a year and not ms since the epoch.
+        try:
+            if float(value) < 9999:
+                raise ValueError("This is not in the form ms since the epoch.")
+        except ValueError:
+            try:
+                parse(value)
+            except ValueError:
+                return False
+        return True
 
 
 @api_config(route_name='api.search',
