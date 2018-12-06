@@ -4,8 +4,6 @@ from __future__ import unicode_literals
 
 import sys
 
-from pyramid.view import view_config
-
 
 # Test seam. Patching `sys.exc_info` directly causes problems with pytest.
 def _exc_info():
@@ -38,10 +36,3 @@ def handle_exception(request, exception):
     # the debug toolbar.
     if request.debug:
         raise
-
-
-def json_view(**settings):
-    """A view configuration decorator with JSON defaults."""
-    settings.setdefault('accept', 'application/json')
-    settings.setdefault('renderer', 'json')
-    return view_config(**settings)
